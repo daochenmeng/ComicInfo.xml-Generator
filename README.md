@@ -1,7 +1,7 @@
 # 漫画元数据ComicInfo.xml的导入、编辑、生成。
 
 #### 介绍
-这是一个轻量级的 ComicInfo.xml 编辑器。
+这是一个用AI生成的轻量级 ComicInfo.xml 编辑器。
 • 导入功能：上方可直接导入旧文件进行修改。
 • 安全隐私：纯本地运行，无数据上传。
 • 兼容性：完美支持 Komga、Tachiyomi 等。
