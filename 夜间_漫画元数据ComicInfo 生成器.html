@@ -1,0 +1,751 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComicInfo.xml 生成器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans SC"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        },
+                        dark: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-in': 'slideIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .input-field {
+            transition: all 0.2s;
+        }
+        .input-field:focus {
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.5);
+        }
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+        /* 文件上传样式 */
+        .file-upload-area {
+            border: 2px dashed rgba(71, 85, 105, 0.5);
+            transition: all 0.3s;
+        }
+        .file-upload-area:hover {
+            border-color: #0ea5e9;
+            background: rgba(14, 165, 233, 0.05);
+        }
+        .file-upload-area.dragover {
+            border-color: #0ea5e9;
+            background: rgba(14, 165, 233, 0.1);
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="border-b border-slate-700 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-brand-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-brand-500/20">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-white">ComicInfo<span class="text-brand-500">.xml</span> 生成器</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded border border-slate-700">标准格式 v2.0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Inputs -->
+        <div class="lg:col-span-7 space-y-6 animate-slide-in" style="animation-delay: 0.1s;">
+            
+            <!-- 导入XML区域 - 新增 -->
+            <div class="glass-panel rounded-2xl p-6 shadow-xl border-brand-500/20">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-file-import text-brand-500"></i> 导入现有 XML
+                    </h2>
+                </div>
+                <div id="uploadArea" class="file-upload-area rounded-xl p-6 text-center cursor-pointer relative" onclick="document.getElementById('xmlFileInput').click()">
+                    <input type="file" id="xmlFileInput" accept=".xml" class="hidden" onchange="handleFileSelect(event)">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 mb-2"></i>
+                    <p class="text-sm text-slate-400">点击选择或拖拽 ComicInfo.xml 文件到此处</p>
+                    <p class="text-xs text-slate-500 mt-1">自动解析并填充下方表单</p>
+                </div>
+                <div id="uploadStatus" class="mt-3 text-sm hidden"></div>
+            </div>
+
+            <!-- 基本信息框 -->
+            <div class="glass-panel rounded-2xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-heading text-brand-500"></i> 基本信息
+                </h2>
+                
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">系列名称 (Series) <span class="text-red-400">*</span></label>
+                    <input type="text" id="series" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-medium" placeholder="输入整个系列的名称，如：海贼王">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">本卷/话标题 (Title)</label>
+                        <input type="text" id="title" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="本卷或本话的标题">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">副标题/原名/别名 (AlternateSeries)</label>
+                        <input type="text" id="alternateSeries" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="如：第二季、Original Name、别名等">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div class="col-span-1">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">话数 (Number)</label>
+                        <input type="text" id="number" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="如: 1050">
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">卷号 (Volume)</label>
+                        <input type="text" id="volume" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="如: 01">
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">总数量 (Count)</label>
+                        <input type="number" id="count" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="总话/卷数">
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">连载状态 (Status)</label>
+                        <select id="status" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-brand-500">
+                            <option value="">不指定</option>
+                            <option value="Ongoing">连载中</option>
+                            <option value="Ended">已完结</option>
+                            <option value="Hiatus">休刊中</option>
+                            <option value="Cancelled">已取消</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">年龄分级 (Age Rating)</label>
+                        <select id="ageRating" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-brand-500">
+                            <option value="Unknown">未知</option>
+                            <option value="G">一般级 (G)</option>
+                            <option value="Kids to Adults">儿童到成人</option>
+                            <option value="Teen">青少年 (Teen)</option>
+                            <option value="Mature 17+">成熟级 17+</option>
+                            <option value="Adults Only 18+">成人级 18+</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">阅读方向 (Manga)</label>
+                        <select id="manga" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-brand-500">
+                            <option value="">不指定</option>
+                            <option value="No">从左到右 (欧美)</option>
+                            <option value="Yes">从右到左 (日漫)</option>
+                            <option value="YesAndRightToLeft">从右到左 (强制)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 创作者与出版信息框 -->
+            <div class="glass-panel rounded-2xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-nib text-purple-500"></i> 创作者与出版信息
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">编剧/作者 (Writer)</label>
+                        <input type="text" id="writer" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="脚本作者">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">画师 (Penciller)</label>
+                        <input type="text" id="penciller" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="主要画师">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">封面画师 (Cover Artist)</label>
+                        <input type="text" id="coverArtist" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="封面绘制者">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">出版社 (Publisher)</label>
+                        <input type="text" id="publisher" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="例如: 集英社, 东立">
+                    </div>
+                    
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">语言 (Language)</label>
+                        <div class="flex gap-2">
+                            <select id="languageSelect" onchange="updateLanguageInput()" class="input-field w-1/2 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500 text-sm">
+                                <option value="">自定义</option>
+                                <option value="zh">中文 (zh)</option>
+                                <option value="zh-Hans">简体中文 (zh-Hans)</option>
+                                <option value="zh-Hant">繁体中文 (zh-Hant)</option>
+                                <option value="ja">日文 (ja)</option>
+                                <option value="en">英文 (en)</option>
+                                <option value="ko">韩文 (ko)</option>
+                                <option value="fr">法文 (fr)</option>
+                                <option value="de">德文 (de)</option>
+                                <option value="es">西班牙文 (es)</option>
+                                <option value="ru">俄文 (ru)</option>
+                            </select>
+                            <input type="text" id="language" class="input-field w-1/2 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="如: zh">
+                        </div>
+                    </div>
+
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">翻译/扫描组 (ScanInformation)</label>
+                        <input type="text" id="scanInformation" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="如：XX汉化组、图源：XXX">
+                    </div>
+                    
+                    <div class="col-span-2 grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">出版年份 (Year)</label>
+                            <input type="number" id="year" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="YYYY">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">月份 (Month)</label>
+                            <input type="number" id="month" min="1" max="12" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="MM">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">日期 (Day)</label>
+                            <input type="number" id="day" min="1" max="31" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="DD">
+                        </div>
+                    </div>
+
+                    <div class="col-span-2 md:col-span-2">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">总页数 (Page Count)</label>
+                        <input type="number" id="pageCount" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分类、标签与简介框 -->
+            <div class="glass-panel rounded-2xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-tags text-green-500"></i> 分类、标签与简介
+                </h2>
+                
+                <div class="mb-6">
+                    <label class="block text-xs font-medium text-slate-400 mb-2">简介 (Summary)</label>
+                    <textarea id="summary" rows="4" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 resize-none" placeholder="输入漫画简介或剧情介绍..."></textarea>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- 类型预设 -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-2">
+                            类型 (Genre) <span class="text-slate-600">- 作品大分类</span>
+                        </label>
+                        <input type="text" id="genre" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 mb-2" placeholder="动作, 冒险, 科幻...">
+                        <div class="flex gap-2 flex-wrap" id="genrePresets"></div>
+                    </div>
+
+                    <!-- 标签预设 -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-2">
+                            标签 (Tags) <span class="text-slate-600">- 更细分的特征标签</span>
+                        </label>
+                        <input type="text" id="tags" class="input-field w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 mb-2" placeholder="穿越, 异世界, 龙傲天...">
+                        <div class="flex gap-2 flex-wrap" id="tagPresets"></div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <label class="block text-xs font-medium text-slate-400">社区评分 (Community Rating)</label>
+                            <span id="ratingValue" class="text-xs text-brand-400 font-mono">0.0</span>
+                        </div>
+                        <input type="range" id="communityRating" min="0" max="5" step="0.1" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-500">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                            <span>0</span>
+                            <span>5</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Preview & Actions -->
+        <div class="lg:col-span-5 flex flex-col gap-6 sticky top-24 h-fit animate-slide-in" style="animation-delay: 0.2s;">
+            
+            <div class="glass-panel rounded-2xl shadow-2xl border-brand-500/30 border overflow-hidden flex flex-col h-[600px]">
+                <div class="bg-slate-900/90 p-4 border-b border-slate-700 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-code text-brand-500"></i>
+                        <span class="font-mono text-sm font-bold text-slate-200">ComicInfo.xml</span>
+                    </div>
+                    <button onclick="copyToClipboard()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded border border-slate-600 transition-colors flex items-center gap-1">
+                        <i class="fa-regular fa-copy"></i> 复制内容
+                    </button>
+                </div>
+                <div class="relative flex-grow bg-[#0d1117] p-0 overflow-hidden">
+                    <textarea id="xmlOutput" readonly class="w-full h-full bg-transparent text-slate-300 font-mono text-xs p-4 resize-none focus:outline-none whitespace-pre"></textarea>
+                </div>
+                <div class="bg-slate-900/50 p-3 border-t border-slate-700 flex justify-between items-center text-xs text-slate-500">
+                    <span id="charCount">0 字符</span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> 实时预览</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="resetForm()" class="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition-all border border-slate-600 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> 清空重置
+                </button>
+                <button onclick="downloadXML()" class="py-3 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-blue-600 hover:from-brand-500 hover:to-blue-500 text-white font-bold shadow-lg shadow-brand-500/25 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> 下载 XML
+                </button>
+            </div>
+
+            <div class="bg-blue-900/20 border border-blue-500/20 rounded-xl p-4 text-sm text-blue-200">
+                <h3 class="font-bold mb-2 flex items-center gap-2"><i class="fa-solid fa-circle-info"></i> 字段说明</h3>
+                <ul class="list-disc list-inside space-y-1 opacity-80 text-xs">
+                    <li><strong>系列名 (Series):</strong> 整个漫画系列的名称</li>
+                    <li><strong>标题 (Title):</strong> 本卷/话的具体标题</li>
+                    <li><strong>副标题/原名/别名 (AlternateSeries):</strong> 篇章名、日文原名或中文别名</li>
+                    <li><strong>话数 (Number):</strong> 第几话，如"1050"</li>
+                    <li><strong>卷号 (Volume):</strong> 单行本卷号，如"01"</li>
+                    <li><strong>语言 (Language):</strong> ISO语言代码，如zh、ja、en</li>
+                    <li><strong>翻译组 (ScanInformation):</strong> 记录汉化组或扫描来源</li>
+                    <li>支持导入现有ComicInfo.xml文件自动填充</li>
+                </ul>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="border-t border-slate-800 mt-auto py-6 bg-slate-900">
+        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+            <p>&copy; 2023 ComicInfo 生成器 | 专为漫画爱好者设计</p>
+        </div>
+    </footer>
+
+    <script>
+        // ==================== 预设配置区 ====================
+        const presetGenres = [
+            '动作', '冒险', '搞笑', '剧情', '奇幻', 
+            '爱情', '青年', '少年', '悬疑', '恐怖',
+            '科幻', '魔法', '超能力', '男性向', '音乐'
+        ];
+
+        const presetTags = [
+            '穿越', '异世界', '龙傲天', '后宫', '治愈',
+            '致郁', '烧脑', '热血', '校园', '职场',
+            '机战', '美食', '恋爱', '复仇', '转生',
+            '系统', '无限流', '日常', '战斗', '推理',
+        ];
+
+        // ==================== 核心代码 ====================
+
+        const inputs = document.querySelectorAll('input, select, textarea');
+        const xmlOutput = document.getElementById('xmlOutput');
+        const charCount = document.getElementById('charCount');
+        const ratingValueDisplay = document.getElementById('ratingValue');
+        const ratingInput = document.getElementById('communityRating');
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPresetButtons();
+            generateXML();
+            setupDragAndDrop();
+            
+            inputs.forEach(input => {
+                input.addEventListener('input', generateXML);
+            });
+            
+            ratingInput.addEventListener('input', (e) => {
+                ratingValueDisplay.textContent = parseFloat(e.target.value).toFixed(1);
+                generateXML();
+            });
+        });
+
+        // 渲染预设按钮
+        function renderPresetButtons() {
+            const genreContainer = document.getElementById('genrePresets');
+            genreContainer.innerHTML = presetGenres.map(genre => 
+                `<button type="button" onclick="addToField('genre', '${genre}')" 
+                    class="text-xs bg-slate-700 hover:bg-brand-600 text-slate-300 hover:text-white px-2 py-1 rounded transition-colors">${genre}</button>`
+            ).join('');
+
+            const tagContainer = document.getElementById('tagPresets');
+            tagContainer.innerHTML = presetTags.map(tag => 
+                `<button type="button" onclick="addToField('tags', '${tag}')" 
+                    class="text-xs bg-indigo-900/50 hover:bg-indigo-600 border border-indigo-700/50 text-indigo-200 hover:text-white px-2 py-1 rounded transition-colors">${tag}</button>`
+            ).join('');
+        }
+
+        function addToField(fieldId, value) {
+            const input = document.getElementById(fieldId);
+            const current = input.value.split(',').map(s => s.trim()).filter(s => s);
+            
+            if (!current.includes(value)) {
+                current.push(value);
+                input.value = current.join(', ');
+                generateXML();
+            }
+        }
+
+        function addGenre(genre) { addToField('genre', genre); }
+        function addTag(tag) { addToField('tags', tag); }
+
+        function updateLanguageInput() {
+            const select = document.getElementById('languageSelect');
+            const input = document.getElementById('language');
+            if (select.value) {
+                input.value = select.value;
+            }
+            generateXML();
+        }
+
+        // ==================== XML导入功能 ====================
+
+        // 设置拖拽上传
+        function setupDragAndDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.remove('dragover');
+                }, false);
+            });
+
+            uploadArea.addEventListener('drop', handleDrop, false);
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0 && files[0].name.endsWith('.xml')) {
+                processXMLFile(files[0]);
+            } else {
+                showUploadStatus('请上传 .xml 文件', 'error');
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processXMLFile(file);
+            }
+        }
+
+        function processXMLFile(file) {
+            showUploadStatus('正在解析...', 'loading');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const xmlContent = e.target.result;
+                    parseAndFillXML(xmlContent);
+                    showUploadStatus(`✓ 成功导入: ${file.name}`, 'success');
+                } catch (error) {
+                    console.error(error);
+                    showUploadStatus('✗ 解析失败，请检查XML格式', 'error');
+                }
+            };
+            reader.onerror = function() {
+                showUploadStatus('✗ 文件读取失败', 'error');
+            };
+            reader.readAsText(file);
+        }
+
+        function showUploadStatus(message, type) {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.textContent = message;
+            statusDiv.classList.remove('hidden', 'text-green-400', 'text-red-400', 'text-brand-400');
+            
+            if (type === 'success') {
+                statusDiv.classList.add('text-green-400');
+            } else if (type === 'error') {
+                statusDiv.classList.add('text-red-400');
+            } else {
+                statusDiv.classList.add('text-brand-400');
+            }
+        }
+
+        function parseAndFillXML(xmlString) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+            
+            // 检查解析错误
+            const parserError = xmlDoc.querySelector('parsererror');
+            if (parserError) {
+                throw new Error('XML解析错误');
+            }
+
+            const getXMLValue = (tagName) => {
+                const element = xmlDoc.getElementsByTagName(tagName)[0];
+                return element ? element.textContent : '';
+            };
+
+            // 字段映射表
+            const fieldMap = {
+                'series': 'Series',
+                'title': 'Title',
+                'alternateSeries': 'AlternateSeries',
+                'number': 'Number',
+                'volume': 'Volume',
+                'count': 'Count',
+                'status': 'Status',
+                'writer': 'Writer',
+                'penciller': 'Penciller',
+                'coverArtist': 'CoverArtist',
+                'publisher': 'Publisher',
+                'year': 'Year',
+                'month': 'Month',
+                'day': 'Day',
+                'pageCount': 'PageCount',
+                'ageRating': 'AgeRating',
+                'manga': 'Manga',
+                'genre': 'Genre',
+                'tags': 'Tags',
+                'language': 'LanguageISO',
+                'scanInformation': 'ScanInformation',
+                'summary': 'Summary'
+            };
+
+            // 填充表单
+            for (const [fieldId, xmlTag] of Object.entries(fieldMap)) {
+                const value = getXMLValue(xmlTag);
+                const element = document.getElementById(fieldId);
+                if (element && value) {
+                    element.value = value;
+                }
+            }
+
+            // 特殊处理：社区评分
+            const rating = getXMLValue('CommunityRating');
+            if (rating) {
+                const ratingNum = parseFloat(rating);
+                if (!isNaN(ratingNum) && ratingNum >= 0 && ratingNum <= 5) {
+                    document.getElementById('communityRating').value = ratingNum;
+                    ratingValueDisplay.textContent = ratingNum.toFixed(1);
+                }
+            }
+
+            // 特殊处理：语言选择框联动
+            const lang = getXMLValue('LanguageISO');
+            if (lang) {
+                const langSelect = document.getElementById('languageSelect');
+                const langInput = document.getElementById('language');
+                langInput.value = lang;
+                
+                // 尝试匹配预设选项
+                const options = Array.from(langSelect.options);
+                const match = options.find(opt => opt.value === lang);
+                if (match) {
+                    langSelect.value = lang;
+                } else {
+                    langSelect.value = '';
+                }
+            }
+
+            // 触发更新
+            generateXML();
+            
+            // 滚动到顶部提示用户
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ==================== XML生成与下载 ====================
+
+        function generateXML() {
+            const getVal = (id) => document.getElementById(id).value.trim();
+            
+            const data = {
+                title: getVal('title'),
+                alternateSeries: getVal('alternateSeries'),
+                series: getVal('series'),
+                number: getVal('number'),
+                volume: getVal('volume'),
+                count: getVal('count'),
+                status: document.getElementById('status').value,
+                ageRating: document.getElementById('ageRating').value,
+                manga: document.getElementById('manga').value,
+                writer: getVal('writer'),
+                penciller: getVal('penciller'),
+                coverArtist: getVal('coverArtist'),
+                publisher: getVal('publisher'),
+                language: getVal('language'),
+                scanInformation: getVal('scanInformation'),
+                year: getVal('year'),
+                month: getVal('month'),
+                day: getVal('day'),
+                pageCount: getVal('pageCount'),
+                genre: getVal('genre'),
+                tags: getVal('tags'),
+                communityRating: parseFloat(document.getElementById('communityRating').value).toFixed(1),
+                summary: getVal('summary')
+            };
+
+            let xml = `<?xml version="1.0" encoding="utf-8"?>\n`;
+            xml += `<ComicInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">\n`;
+
+            const addNode = (tag, value) => {
+                if (value && value !== '0' && value !== '0.0') {
+                    xml += `  <${tag}>${escapeXml(value)}</${tag}>\n`;
+                }
+            };
+
+            addNode('Title', data.title);
+            addNode('Series', data.series);
+            addNode('AlternateSeries', data.alternateSeries);
+            addNode('Number', data.number);
+            addNode('Volume', data.volume);
+            addNode('Count', data.count);
+            addNode('Year', data.year);
+            addNode('Month', data.month);
+            addNode('Day', data.day);
+            addNode('Writer', data.writer);
+            addNode('Penciller', data.penciller);
+            addNode('CoverArtist', data.coverArtist);
+            addNode('Publisher', data.publisher);
+            addNode('Genre', data.genre);
+            addNode('Tags', data.tags);
+            addNode('PageCount', data.pageCount);
+            addNode('LanguageISO', data.language);
+            addNode('ScanInformation', data.scanInformation);
+            addNode('AgeRating', data.ageRating);
+            
+            if (data.communityRating > 0) {
+                addNode('CommunityRating', data.communityRating);
+            }
+            
+            if (data.manga) {
+                addNode('Manga', data.manga);
+            }
+            
+            addNode('Status', data.status);
+            
+            if (data.summary) {
+                xml += `  <Summary>${escapeXml(data.summary)}</Summary>\n`;
+            }
+
+            xml += `</ComicInfo>`;
+
+            xmlOutput.value = xml;
+            charCount.textContent = `${xml.length} 字符`;
+        }
+
+        function escapeXml(unsafe) {
+            if (!unsafe) return "";
+            return unsafe.replace(/[<>&'"]/g, function (c) {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                }
+            });
+        }
+
+        function downloadXML() {
+            const text = xmlOutput.value;
+            if (!text) return;
+
+            const blob = new Blob([text], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            a.href = url;
+            a.download = `ComicInfo.xml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function copyToClipboard() {
+            xmlOutput.select();
+            document.execCommand('copy');
+            
+            const btn = document.querySelector('button[onclick="copyToClipboard()"]');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> 已复制';
+            btn.classList.add('text-green-400');
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('text-green-400');
+            }, 2000);
+        }
+
+        function resetForm() {
+            if(confirm('确定要清空所有内容吗？')) {
+                document.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => el.value = '');
+                document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+                document.getElementById('communityRating').value = 0;
+                ratingValueDisplay.textContent = "0.0";
+                document.getElementById('uploadStatus').classList.add('hidden');
+                generateXML();
+            }
+        }
+    </script>
+</body>
+</html>

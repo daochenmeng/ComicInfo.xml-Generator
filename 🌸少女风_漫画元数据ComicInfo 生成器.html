@@ -1,0 +1,616 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸 漫画档案室 | ComicInfo Editor</title>
+    <style>
+        :root {
+            /* === 暖系深色少女风 === */
+            --bg-body: #f4f1ea;
+            --bg-card: #ffffff;
+            --primary: #c96a7b;        /* 深干枯玫瑰色 */
+            --primary-light: #fcecef;
+            --primary-hover: #b05566;
+            --text-main: #4a3c3c;      /* 深咖啡色 */
+            --text-sub: #7d6b6b;       /* 深暖灰 */
+            --border: #dcbabf;         /* 粉灰边框 */
+            --input-bg: #fcfbf9;
+            --focus: #c96a7b;
+            --radius: 10px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: "Nunito", "Microsoft YaHei", "PingFang SC", sans-serif;
+            background-color: var(--bg-body);
+            background-image: linear-gradient(rgba(200, 180, 180, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(200, 180, 180, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+            font-size: 13px;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        /* 头部 */
+        header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 12px;
+            padding: 16px;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: 0 2px 10px rgba(201, 106, 123, 0.08);
+            border: 1px solid var(--border);
+        }
+
+        h1 { margin: 0; font-size: 1.4rem; color: var(--primary); font-weight: 700; }
+        .subtitle { font-size: 0.85rem; color: var(--text-sub); margin-top: 4px; }
+
+        /* 卡片容器 */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        }
+
+        .card-header {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed var(--border);
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-header span { color: var(--primary); font-size: 1.1em; margin-right: 6px; }
+
+        /* 网格系统 */
+        .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+        .col-12 { grid-column: span 12; }
+        .col-6  { grid-column: span 6; }
+        .col-4  { grid-column: span 4; }
+
+        .form-group { display: flex; flex-direction: column; }
+
+        label {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        /* 输入框 */
+        input:not([type="range"]), select, textarea {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            background: var(--input-bg);
+            transition: border-color 0.2s;
+            width: 100%;
+            height: 32px;
+        }
+        
+        textarea { height: auto; min-height: 60px; resize: vertical; line-height: 1.4; }
+
+        input:not([type="range"]):focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--focus);
+            background: #fff;
+            box-shadow: 0 0 0 2px rgba(201, 106, 123, 0.15);
+        }
+
+        /* 评分滑块 */
+        .slider-container {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--input-bg); padding: 4px 10px;
+            border: 1px solid var(--border); border-radius: 6px; height: 32px;
+        }
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 4px;
+            background: #e0d0d0; border-radius: 5px; outline: none; padding: 0; border: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px;
+            border-radius: 50%; background: var(--primary); cursor: pointer;
+            border: 2px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        .rating-display { font-weight: bold; color: var(--primary); font-size: 0.95em; min-width: 50px; text-align: right; }
+
+        .input-group { display: flex; gap: 6px; }
+        .input-group select { width: 90px; flex-shrink: 0; background-color: #f2efeb; cursor: pointer; }
+
+        .tag-area { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .tag-btn {
+            font-size: 0.75rem; padding: 2px 10px; background: #fff;
+            border: 1px solid var(--border); border-radius: 15px; color: var(--text-sub);
+            cursor: pointer; transition: all 0.2s; user-select: none;
+        }
+        .tag-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+        /* === 右侧侧边栏区域 === */
+        .sidebar { position: sticky; top: 10px; }
+
+        /* 上传框样式 (New!) */
+        .upload-box {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+            color: var(--text-sub);
+            position: relative;
+        }
+        
+        .upload-box:hover, .upload-box.drag-over {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .upload-icon { font-size: 24px; display: block; margin-bottom: 5px; }
+        .upload-text { font-size: 0.85rem; font-weight: bold; }
+        .upload-sub { font-size: 0.75rem; opacity: 0.7; }
+
+        /* 预览框容器 */
+        .preview-wrapper { position: relative; width: 100%; }
+
+        .preview-box {
+            width: 100%;
+            height: 480px;
+            font-family: "Consolas", "Monaco", monospace;
+            font-size: 11px;
+            background: #3d3436; 
+            color: #fcebeb;       
+            border: none;
+            padding: 12px;
+            padding-top: 35px; 
+            border-radius: 6px;
+            resize: none;
+            white-space: pre;
+            pointer-events: auto;
+            margin-bottom: 0;
+            display: block;
+        }
+        .preview-box:hover, .preview-box:focus {
+            background: #3d3436 !important;
+            color: #fcebeb !important;
+            outline: none !important;
+        }
+
+        /* 悬浮复制按钮 */
+        .btn-copy-float {
+            position: absolute; top: 8px; right: 8px;
+            padding: 4px 10px; font-size: 11px;
+            background: rgba(255, 255, 255, 0.15); color: #fcebeb;
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;
+            cursor: pointer; transition: all 0.2s; z-index: 10;
+        }
+        .btn-copy-float:hover { background: #fff; color: var(--primary); }
+
+        /* 按钮组 */
+        .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+
+        .btn {
+            width: 100%; padding: 12px; border: none; border-radius: 20px;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            transition: opacity 0.2s, background 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 3px 8px rgba(201, 106, 123, 0.25); }
+        .btn-primary:hover { opacity: 0.9; }
+
+        .btn-reset-block {
+            background: white; border: 2px solid #e0d0d0; color: #8a7a7a; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .btn-reset-block:hover { border-color: var(--primary); color: var(--primary); background: #fff8f9; }
+
+        .intro-box {
+            margin-top: 16px; padding: 15px; background: #fdfaf8;
+            border: 1px dashed var(--border); border-radius: var(--radius);
+            font-size: 0.8rem; color: var(--text-sub); line-height: 1.6;
+        }
+        .intro-box h4 { margin: 0 0 5px 0; color: var(--primary); font-size: 0.9rem; }
+        .intro-box p { margin: 0; }
+
+        @media (max-width: 850px) {
+            .container { grid-template-columns: 1fr; }
+            .sidebar { position: static; }
+            .col-4 { grid-column: span 4; } 
+            .col-6 { grid-column: span 12; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🌸 漫画档案室 ComicInfo</h1>
+            <div class="subtitle">让整理漫画变成一件治愈的小事 ~</div>
+        </header>
+
+        <!-- 左侧：表单区 -->
+        <div class="main-content">
+            
+            <div class="card">
+                <div class="card-header"><div><span>🏷️</span> 身份信息</div></div>
+                <div class="grid">
+                    <div class="form-group col-12"><label>系列名称 (Series)</label><input type="text" id="Series" placeholder="例如：百变小樱"></div>
+                    <div class="form-group col-12"><label>本卷/本话标题 (Title)</label><input type="text" id="Title" placeholder="例如：被封印的卡片"></div>
+                    <div class="form-group col-12"><label>原名 / 别名 (AlternateSeries)</label><input type="text" id="AlternateSeries" placeholder="例如：カードキャプターさくら"></div>
+                    <div class="form-group col-4"><label>话数 No.</label><input type="text" id="Number" placeholder="#"></div>
+                    <div class="form-group col-4"><label>卷号 Vol.</label><input type="number" id="Volume" placeholder="Vol"></div>
+                    <div class="form-group col-4"><label>总数 Count</label><input type="number" id="Count"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><div><span>⚙️</span> 档案与评价</div></div>
+                <div class="grid">
+                    <div class="form-group col-6">
+                        <label>语言</label>
+                        <div class="input-group">
+                            <select onchange="setLanguage(this.value)">
+                                <option value="" disabled selected>选择</option>
+                                <option value="zh">中文</option>
+                                <option value="ja">日文</option>
+                                <option value="en">英文</option>
+                            </select>
+                            <input type="text" id="LanguageISO" value="zh">
+                        </div>
+                    </div>
+                    <div class="form-group col-6">
+                        <label>阅读方向</label>
+                        <select id="Manga">
+					     	<option value="" selected>❓ 不指定</option>
+                            <option value="No">➡️ 从左到右 (欧美)</option>
+                            <option value="Yes">⬅️ 从右到左 (日漫)</option>
+							<option value="YesAndRightToLeft">⬅️ 从右到左 (强制))</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-12">
+                        <label>推荐评分 (Rating)</label>
+                        <div class="slider-container">
+                            <input type="range" id="CommunityRating" min="0" max="5" step="0.5" value="0" oninput="updateRatingDisplay(this.value)">
+                            <div class="rating-display">
+                                <span id="rating-val-text">0.0</span> <span style="font-size:0.8em">⭐</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-6">
+                        <label>年龄分级</label>
+                        <select id="AgeRating">
+                            <option value="">默认</option>
+                            <option value="Everyone">🟢 全年龄</option>
+                            <option value="Teen">🔵 青少年 (13+)</option>
+                            <option value="Mature 17+">🟣 青年 (17+)</option>
+                            <option value="Adults Only 18+">🔴 成人 (18+)</option>
+                        </select>
+                    </div>
+                     <div class="form-group col-6">
+                        <label>来源网址</label>
+                        <input type="text" id="Web">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><div><span>🎨</span> 人员与出版</div></div>
+                <div class="grid">
+                    <div class="form-group col-6"><label>脚本/作者</label><input type="text" id="Writer"></div>
+                    <div class="form-group col-6"><label>作画/画师</label><input type="text" id="Penciller"></div>
+                    <div class="form-group col-6"><label>汉化/翻译</label><input type="text" id="Translator"></div>
+                    <div class="form-group col-6"><label>编辑</label><input type="text" id="Editor"></div>
+                    <div class="form-group col-12"><label>出版社</label><input type="text" id="Publisher" placeholder="例如：集英社"></div>
+                    <div class="form-group col-4"><label>年 Year</label><input type="number" id="Year"></div>
+                    <div class="form-group col-4"><label>月 Month</label><input type="number" id="Month"></div>
+                    <div class="form-group col-4"><label>日 Day</label><input type="number" id="Day"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><div><span>📝</span> 内容详情</div></div>
+                <div class="grid">
+                    <div class="form-group col-12"><label>剧情简介</label><textarea id="Summary"></textarea></div>
+                    <div class="form-group col-12">
+                        <label>题材分类 (Genre)</label>
+                        <input type="text" id="Genre" placeholder="点击下方添加...">
+                        <div class="tag-area" id="genre-presets"></div>
+                    </div>
+                    <div class="form-group col-12">
+                        <label>常用标签 (Tags)</label>
+                        <input type="text" id="Tags" placeholder="点击下方添加...">
+                        <div class="tag-area" id="status-presets"></div>
+                    </div>
+                    <div class="form-group col-12"><label>备注 (Notes)</label><input type="text" id="Notes"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：侧边栏 -->
+        <div class="sidebar">
+            
+            <!-- 上传模块 (新增) -->
+            <div id="drop-zone" class="upload-box" onclick="document.getElementById('file-input').click()">
+                <span class="upload-icon">📂</span>
+                <div class="upload-text">点击或拖拽 XML 文件</div>
+                <div class="upload-sub">自动读取现有 ComicInfo 信息</div>
+                <input type="file" id="file-input" hidden accept=".xml" onchange="handleFileUpload(this.files)">
+            </div>
+
+            <!-- 预览卡片 -->
+            <div class="card" style="border: 2px dashed var(--primary); background: #fffcfc; padding-top:10px;">
+                <div class="card-header" style="justify-content: center; color: var(--primary); border:none; margin-bottom:5px;">
+                    🔍 档案预览
+                </div>
+                
+                <div class="preview-wrapper">
+                    <button class="btn-copy-float" onclick="copyToClipboard()" title="复制内容">📋 复制</button>
+                    <textarea id="preview" class="preview-box" readonly></textarea>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="generateAndDownload()">
+                        📥 生成并下载 XML
+                    </button>
+                    <button class="btn btn-reset-block" onclick="resetForm()">
+                        🔄 清空重置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 项目简介 -->
+            <div class="intro-box">
+                <h4>🌸 关于本项目</h4>
+                <p>
+                    这是一个轻量级的 <b>ComicInfo.xml</b> 编辑器。
+                    <br>
+                    • <b>导入功能</b>：上方可直接导入旧文件进行修改。
+                    <br>
+                    • <b>安全隐私</b>：纯本地运行，无数据上传。
+                    <br>
+                    • <b>兼容性</b>：完美支持 Komga、Tachiyomi 等。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const genreList = ["女性向", "恋爱", "纯爱", "校园", "百合", "喜剧", "奇幻", "魔法", "治愈", "日常", "剧情", "冒险", "古风", "职场", "后宫", "异世界", "悬疑"];
+        const tagList = ["连载中", "已完结", "彩色", "黑白", "复仇", "单行本", "同人", "WEB漫", "无修", "官方汉化", "个人汉化", "NTR", "触手"];
+
+        // 所有需要处理的字段ID
+        const allFields = [
+            'Series', 'Title', 'AlternateSeries', 'Number', 'Volume', 'Count',
+            'Summary', 'Notes', 'Year', 'Month', 'Day',
+            'Writer', 'Penciller', 'Translator', 'Editor',
+            'Publisher', 'Web', 'Genre', 'Tags',
+            'LanguageISO', 'Manga', 'AgeRating', 'CommunityRating'
+        ];
+
+        window.onload = function() {
+            renderTags();
+            setDefaultDate();
+            bindEvents();
+            setupDragAndDrop(); // 初始化拖拽
+            updatePreview(); 
+        };
+
+        function bindEvents() {
+            document.querySelectorAll('input:not([type="range"]), select, textarea').forEach(el => {
+                el.addEventListener('input', updatePreview);
+                el.addEventListener('change', updatePreview);
+            });
+        }
+
+        /* === 拖拽与上传逻辑 (New!) === */
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // 高亮效果
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+            });
+
+            // 处理文件放置
+            dropZone.addEventListener('drop', handleDrop, false);
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFileUpload(files);
+        }
+
+        function handleFileUpload(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === "text/xml" || file.name.endsWith(".xml")) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        parseAndPopulate(e.target.result);
+                    };
+                    reader.readAsText(file);
+                } else {
+                    alert("请上传有效的 XML 文件");
+                }
+            }
+        }
+
+        function parseAndPopulate(xmlText) {
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                
+                // 遍历所有字段并尝试从XML中获取
+                allFields.forEach(field => {
+                    const element = xmlDoc.querySelector(field);
+                    const inputEl = document.getElementById(field);
+                    
+                    if (element && inputEl) {
+                        const val = element.textContent;
+                        
+                        // 特殊处理评分条
+                        if (field === 'CommunityRating') {
+                            inputEl.value = val;
+                            updateRatingDisplay(val);
+                        } else {
+                            inputEl.value = val;
+                        }
+                    }
+                });
+
+                updatePreview();
+                alert("🌸 读取成功！数据已自动填充");
+                
+            } catch (error) {
+                console.error(error);
+                alert("XML 解析失败，请检查文件格式");
+            }
+        }
+
+        /* === 常规逻辑 === */
+        function updateRatingDisplay(val) {
+            document.getElementById('rating-val-text').textContent = parseFloat(val).toFixed(1);
+            updatePreview();
+        }
+
+        function setDefaultDate() {
+            const d = new Date();
+            document.getElementById('Year').value = d.getFullYear();
+            document.getElementById('Month').value = d.getMonth() + 1;
+            document.getElementById('Day').value = d.getDate();
+        }
+
+        function renderTags() {
+            const createBadge = (text, id) => {
+                const s = document.createElement('span');
+                s.className = 'tag-btn';
+                s.textContent = text;
+                s.onclick = () => addTag(id, text);
+                return s;
+            };
+            genreList.forEach(t => document.getElementById('genre-presets').appendChild(createBadge(t, 'Genre')));
+            tagList.forEach(t => document.getElementById('status-presets').appendChild(createBadge(t, 'Tags')));
+        }
+
+        function addTag(id, text) {
+            const el = document.getElementById(id);
+            let val = el.value.trim();
+            if (val && !val.includes(text)) {
+                const separator = (val.endsWith(',') || val.endsWith('，')) ? ' ' : ', ';
+                el.value = val + separator + text;
+            } else if (!val) {
+                el.value = text;
+            }
+            updatePreview();
+        }
+
+        function setLanguage(val) {
+            document.getElementById('LanguageISO').value = val;
+            updatePreview();
+        }
+
+        function escapeXml(str) {
+            if (!str) return "";
+            return str.replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','\'':'&apos;','\"':'&quot;'}[c]));
+        }
+
+        function createXMLString() {
+            const getVal = (id) => escapeXml(document.getElementById(id)?.value.trim() || "");
+            let xml = '<?xml version="1.0"?>\n<ComicInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n';
+            allFields.forEach(f => {
+                const v = getVal(f);
+                if (v !== "" && !(f === 'CommunityRating' && v === '0')) {
+                     xml += `  <${f}>${v}</${f}>\n`;
+                }
+            });
+            xml += '</ComicInfo>';
+            return xml;
+        }
+
+        function updatePreview() {
+            document.getElementById('preview').value = createXMLString();
+        }
+
+        function resetForm() {
+            if(confirm("确定要清空所有内容吗？")) {
+                document.querySelectorAll('input:not([type="range"]), textarea').forEach(e => e.value = "");
+                document.querySelectorAll('select').forEach(e => e.selectedIndex = 0);
+                document.getElementById('CommunityRating').value = 0;
+                document.getElementById('rating-val-text').textContent = "0.0";
+                setDefaultDate();
+                document.getElementById('LanguageISO').value = 'zh';
+                document.getElementById('Manga').value = '';
+                updatePreview();
+            }
+        }
+
+        function copyToClipboard() {
+            const el = document.getElementById("preview");
+            el.select();
+            navigator.clipboard.writeText(el.value).then(() => {
+                const btn = document.querySelector('.btn-copy-float');
+                const oldText = btn.innerHTML;
+                btn.innerHTML = "✨ 已复制";
+                btn.style.color = "#ffb7b7";
+                btn.style.borderColor = "#ffb7b7";
+                setTimeout(() => {
+                    btn.innerHTML = oldText;
+                    btn.style.color = "";
+                    btn.style.borderColor = "";
+                }, 2000);
+            });
+        }
+
+        function generateAndDownload() {
+            const blob = new Blob([createXMLString()], { type: "text/xml;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "ComicInfo.xml";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
