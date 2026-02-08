@@ -1,4 +1,4 @@
-# 漫画元数据ComicInfo.xml的导入、编辑、生成。
+# 漫画元数据ComicInfo.xml的导入、编辑、生成。文件在html文件夹中下载。
 
 #### 介绍
 这是一个用AI生成的轻量级 ComicInfo.xml 编辑器。
