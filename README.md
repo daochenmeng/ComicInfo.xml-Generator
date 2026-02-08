@@ -18,3 +18,7 @@
 
 #### 字段说明:
 使用方法，放到zip或cba漫画压缩文件内部的根目录下，支持的应用如Komga既可以检索到。
+
+<p align="center">
+  <img src="image/%F0%9F%8C%B8%E5%B0%91%E5%A5%B3%E9%A3%8E_%E6%BC%AB%E7%94%BB%E5%85%83%E6%95%B0%E6%8D%AEComicInfo%20%E7%94%9F%E6%88%90%E5%99%A8.png" width="80%" alt="ComicInfo 生成器界面">
+</p>
