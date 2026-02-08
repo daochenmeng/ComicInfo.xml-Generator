@@ -20,8 +20,9 @@
 使用方法，放到zip或cba漫画压缩文件内部的根目录下，支持的应用如Komga既可以检索到。
 
 <div align="left">
-  <img src="image/%F0%9F%8C%B8%E5%B0%91%E5%A5%B3%E9%A3%8E_%E6%BC%AB%E7%94%BB%E5%85%83%E6%95%B0%E6%8D%AEComicInfo%20%E7%94%9F%E6%88%90%E5%99%A8.png" width="50%" alt="ComicInfo 生成器">
-</div>
-<div align="left">
-  <img src="image/夜间_漫画元数据ComicInfo 生成器.png">
-</div>
+  <img src="image/%F0%9F%8C%B8%E5%B0%91%E5%A5%B3%E9%A3%8E_%E6%BC%AB%E7%94%BB%E5%85%83%E6%95%B0%E6%8D%AEComicInfo%20%E7%94%9F%E6%88%90%E5%99%A8.png" 
+       style="width: 90%; border-radius: 15px; margin: 20px 0;" 
+       alt="ComicInfo 生成器">
+  <img src="image/夜间_漫画元数据ComicInfo 生成器.png" 
+       style="width: 90%; border-radius: 15px; margin: 20px 0;" 
+       alt="ComicInfo 生成器">
